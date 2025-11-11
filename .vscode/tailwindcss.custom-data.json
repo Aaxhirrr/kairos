@@ -1,0 +1,17 @@
+{
+  "version": 1.1,
+  "atDirectives": [
+    {
+      "name": "@custom-variant",
+      "description": "Tailwind CSS custom variant declaration used in Tailwind v4 inline styles."
+    },
+    {
+      "name": "@theme",
+      "description": "Tailwind CSS inline theme definition for design tokens."
+    },
+    {
+      "name": "@apply",
+      "description": "Tailwind CSS utility application shortcut."
+    }
+  ]
+}
