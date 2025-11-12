@@ -110,8 +110,27 @@ function heroImageForMarket(market: AdjacentMarket, index: number) {
   return heroImages[poolIndex]
 }
 
+function cleanMarketQuestion(question?: string): string {
+  if (!question) return "Forward-looking signal"
+
+  // Remove patterns like "yes New England,yes Baltimore" -> "New England, Baltimore"
+  let cleaned = question.replace(/,yes /g, ', ')
+  cleaned = cleaned.replace(/^yes /i, '')
+  cleaned = cleaned.replace(/,no /g, ', ')
+  cleaned = cleaned.replace(/^no /i, '')
+
+  // Clean up any double spaces or commas
+  cleaned = cleaned.replace(/\s+/g, ' ')
+  cleaned = cleaned.replace(/,\s*,/g, ',')
+  cleaned = cleaned.trim()
+
+  return cleaned || "Forward-looking signal"
+}
+
 function toStoryCard(market: AdjacentMarket, article: AdjacentNewsArticle | null, idx: number): StoryCard {
-  const title = article?.title ?? market.question ?? market.market_slug ?? "Forward-looking signal"
+  // Prioritize article title, then clean market question
+  const title = article?.title ?? cleanMarketQuestion(market.question) ?? market.market_slug ?? "Forward-looking signal"
+
   const dek =
     article?.snippet ??
     market.description ??
