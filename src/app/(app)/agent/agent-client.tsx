@@ -48,6 +48,9 @@ const quickActions = [
 
 const initialAssistantMessage = [
   "Hey - I'm your Claude-powered copilot, keeping track of your watchlists, alert rules, and trade memory so everything stays in sync.",
+  "",
+  "⚠️ Note: The beta APIs for Adjacent and Nevua have been deactivated by the companies as the hackathon has come to an end. I can still help you create JSON payloads for watchlists and alerts that you can manually load when the APIs are reactivated.",
+  "",
   "Ask me about news triage, alert JSON, imports, or let me help stress-test a thesis.",
 ].join("\n")
 
@@ -141,6 +144,15 @@ export default function AgentClient() {
 - Portfolio import and normalization
 - Resolution evidence gathering
 - Factor analysis and exposure calculations
+
+IMPORTANT API STATUS:
+The Nevua and Adjacent beta API keys have been deactivated by the companies as the hackathon has come to an end. When users ask about watchlists, alerts, or news:
+
+1. For Nevua watchlists/alerts: Mention that you're unable to reach the Nevua API right now, but you can provide a JSON payload as a fallback that they can manually load when the API is reactivated.
+
+2. For Adjacent news: Mention that you're unable to reach the Adjacent API right now due to the beta access ending after the hackathon.
+
+3. Always acknowledge: "From my memory of our conversations, the beta APIs for Adjacent and Nevua have been deactivated by the companies themselves as the hackathon has come to an end."
 
 Current user context:
 - Memory: ${memorySummary}
