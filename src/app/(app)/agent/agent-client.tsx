@@ -47,133 +47,15 @@ const quickActions = [
 ]
 
 const initialAssistantMessage = [
-  "Hey Aashir - I'm holding onto your watchlists, alert rules, and trade memory so the modules stay in sync.",
-  "Ask for news triage, alert JSON, imports, or let me stress-test a thesis.",
+  "Hey - I'm your Claude-powered copilot, keeping track of your watchlists, alert rules, and trade memory so everything stays in sync.",
+  "Ask me about news triage, alert JSON, imports, or let me help stress-test a thesis.",
 ].join("\n")
-
-type DemoJobKey = "coherence" | "resolve" | "factor" | "arena" | "job3" | "job4" | "job5" | "default"
-
-type ReplyBuilder = (prompt: string) => string
-
-const cannedReplies: Record<DemoJobKey, ReplyBuilder> = {
-  coherence: () =>
-    [
-      "Done - Coherence scan complete.",
-      "- Trimmed overlap between the AI-ban NO and CPI hedge YES so net exposure stays balanced.",
-      "- Logged the adjustment in the agent memory and synced it to the watchlist dashboard.",
-    ].join("\n"),
-  resolve: () =>
-    [
-      "Done - Resolve pack is staged.",
-      "- Pulled DOJ filings, state AG statements, and newsroom transcripts into the receipts queue.",
-      "- Added a reminder for you to attach the Nevua clip before sharing.",
-    ].join("\n"),
-  factor: () =>
-    [
-      "Done - Factor blend ready.",
-      "```json",
-      JSON.stringify(
-        {
-          factors: [
-            { name: "AI supply squeeze", weight: 0.42 },
-            { name: "CPI glide path", weight: 0.35 },
-            { name: "Tail hedges", weight: 0.23 },
-          ],
-          netDelta: "+0.11",
-          commentary: "BTC hedge offsets CPI surprise, leaving AI disinfo long as the driver.",
-        },
-        null,
-        2
-      ),
-      "```",
-    ].join("\n"),
-  arena: () =>
-    [
-      "Done - Arena challenge logged on the Bitcoin volatility stack.",
-      "- No incoherent trades detected; BTC watchlist stays green.",
-      "- Flagged a follow-up to size the halving straddle after the Nevua alert fires.",
-    ].join("\n"),
-  job3: () =>
-    [
-      "Done - Job 3 done. Forward-looking news worth watching:",
-      "1. White House floats export guardrails for AI chips - why it matters: shifts liquidity in the AI infra watchlist.",
-      "2. Swing-state board of elections fast-tracks poll watcher funding - hits the election interference list.",
-      "3. Bitcoin miner curtailment rumor in Texas - lines up with the Bitcoin volatility stack you pinned.",
-    ].join("\n"),
-  job4: () =>
-    [
-      "Done - Job 4 done. Nevua alert JSON synced to the Bitcoin volatility stack watchlist.",
-      "```json",
-      JSON.stringify(
-        {
-          watchlistId: "wl-bitcoin-vol",
-          rule: {
-            thresholdPercent: 5,
-            windowMinutes: 60,
-            direction: "up",
-            fallback: "resolutionMinus24h",
-          },
-          channels: ["webhook", "sms"],
-        },
-        null,
-        2
-      ),
-      "```",
-      "Webhook + SMS are armed, and the watchlist card shows the new rule.",
-    ].join("\n"),
-  job5: () =>
-    [
-      "Done - Job 5 complete. Portfolio normalized.",
-      "```json",
-      JSON.stringify(
-        {
-          marketIds: ["BTC-HALVING-2024", "AI-BAN-STATE-SWEEP", "FED-CUTS-2X"],
-          handles: ["@Theo4", "0x5668...5839"],
-          positions: [
-            { marketId: "BTC-HALVING-2024", side: "YES", size: "$1,500" },
-            { marketId: "AI-BAN-STATE-SWEEP", side: "NO", size: "$1,050" },
-            { marketId: "FED-CUTS-2X", side: "YES", size: "$1,200" },
-          ],
-        },
-        null,
-        2
-      ),
-      "```",
-      "You can copy/paste that straight into Nevua imports.",
-    ].join("\n"),
-  default: (prompt) =>
-    [
-      "Logged it. Agent memory is updated and Nevua watchlists are already synced.",
-      `You asked for: "${prompt}".`,
-      "Ping me again if you want a news triage, alert rule, or import clean up.",
-    ].join("\n"),
-}
-
-function classifyPrompt(prompt: string): DemoJobKey {
-  const normalized = prompt.toLowerCase()
-  if (normalized.includes("job 3") || normalized.includes("news")) return "job3"
-  if (normalized.includes("job 4") || normalized.includes("alert") || normalized.includes("nevua")) return "job4"
-  if (normalized.includes("job 5") || normalized.includes("import") || normalized.includes("normalize")) return "job5"
-  if (normalized.includes("coherence")) return "coherence"
-  if (normalized.includes("resolve") || normalized.includes("receipt")) return "resolve"
-  if (normalized.includes("factor")) return "factor"
-  if (normalized.includes("arena") || normalized.includes("bitcoin") || normalized.includes("btc")) return "arena"
-  return "default"
-}
-
-function buildDemoReply(prompt: string) {
-  const key = classifyPrompt(prompt)
-  const builder = cannedReplies[key] ?? cannedReplies.default
-  return builder(prompt)
-}
 
 type ChatMessage = {
   id: string
   role: "user" | "assistant"
   content: string
 }
-
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 const generateMessageId = () => {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -241,31 +123,57 @@ export default function AgentClient() {
       const statusId = generateMessageId()
       setMessages((prev) => [...prev, { id: statusId, role: "assistant", content: "Thinking..." }])
 
-      await delay(3000)
-      setMessages((prev) =>
-        prev.map((msg) => (msg.id === statusId ? { ...msg, content: "Analyzing user prompt..." } : msg))
-      )
+      // Build conversation history for Claude
+      const conversationHistory = [...messages, userMessage].map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      }))
 
-      await delay(3000)
-      setMessages((prev) =>
-        prev.map((msg) => (msg.id === statusId ? { ...msg, content: "Creating response..." } : msg))
-      )
+      // Call the actual Claude API
+      const response = await fetch("/api/claude", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system: `You are a helpful AI assistant for Kairos, a prediction market analysis platform. You help users with:
+- Market analysis and coherence checking
+- Creating Nevua watchlist alerts in JSON format
+- News triage and summarization
+- Portfolio import and normalization
+- Resolution evidence gathering
+- Factor analysis and exposure calculations
 
-      await delay(3000)
-      const reply = buildDemoReply(trimmed)
+Current user context:
+- Memory: ${memorySummary}
+- Active watchlists: ${demoUser.watchlistKeywords.join(", ")}
+- Focus trades: ${focusTrades.map((t) => t.market).join(", ")}
+
+Be concise, actionable, and format JSON code blocks when appropriate.`,
+          messages: conversationHistory,
+          max_tokens: 1500,
+          temperature: 0.7,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      const reply = data.content?.[0]?.text ?? "I couldn't generate a response. Please try again."
 
       setMessages((prev) => prev.filter((msg) => msg.id !== statusId))
 
       const assistantMessage: ChatMessage = { id: generateMessageId(), role: "assistant", content: reply }
       setMessages((prev) => [...prev, assistantMessage])
     } catch (error) {
+      setMessages((prev) => prev.filter((msg) => msg.role === "assistant" && msg.content === "Thinking..."))
       const assistantMessage: ChatMessage = {
         id: generateMessageId(),
         role: "assistant",
-        content: "Something glitched on my side. Try again in a moment and I'll keep the context frozen.",
+        content: "Something went wrong connecting to Claude. Please check your API key configuration and try again.",
       }
       setMessages((prev) => [...prev, assistantMessage])
-      console.error(error)
+      console.error("[agent] Claude API error:", error)
     } finally {
       setIsSending(false)
     }
