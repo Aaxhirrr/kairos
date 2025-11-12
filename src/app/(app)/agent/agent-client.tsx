@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { demoUser } from "@/data/demo-user"
 import { cn } from "@/lib/utils"
+import RevealOnView from "@/components/reveal-on-view"
 
 const quickActions = [
   {
