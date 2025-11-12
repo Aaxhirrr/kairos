@@ -132,9 +132,9 @@ export default function UsersPage() {
         )}
       </RevealOnView>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <RevealOnView className="grid grid-cols-1 gap-6 lg:grid-cols-2" staggerChildren>
         {leaderboard.map((user) => (
-          <RevealOnView key={user.id} className="rounded-3xl border border-white/10 bg-neutral-900/60 p-6">
+          <div key={user.id} className="rounded-3xl border border-white/10 bg-neutral-900/60 p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-[0.35em] text-white/40">profile</p>
@@ -183,11 +183,11 @@ export default function UsersPage() {
                 </a>
               </Button>
             </div>
-          </RevealOnView>
+          </div>
         ))}
-      </div>
+      </RevealOnView>
 
-      <RevealOnView className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <RevealOnView className="grid grid-cols-1 gap-4 md:grid-cols-3" staggerChildren>
         {helperCards.map((item) => (
           <div key={item} className="rounded-3xl border border-white/10 bg-neutral-900/60 p-5">
             <p className="text-lg font-semibold text-white">{item}</p>

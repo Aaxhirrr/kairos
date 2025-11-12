@@ -1,4 +1,5 @@
 import { NewsFilters, type NewsFilterFormState } from "./news-filters"
+import RevealOnView from "@/components/reveal-on-view"
 
 export const revalidate = 0
 
@@ -125,7 +126,7 @@ export default async function NewsPage({ searchParams }: { searchParams?: Search
 
       {heroStory ? (
         <section className="px-4 py-12">
-          <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 border-b border-black/10 pb-10 md:flex-row">
+          <RevealOnView className="mx-auto flex w-full max-w-5xl flex-col gap-8 border-b border-black/10 pb-10 md:flex-row" intensity="hero">
             <div className="flex-1 space-y-4">
               <p className="text-sm uppercase tracking-[0.3em] text-black/60">{heroStory.date}</p>
               <h2 className="text-4xl font-light leading-tight">{heroStory.title}</h2>
@@ -154,17 +155,19 @@ export default async function NewsPage({ searchParams }: { searchParams?: Search
                 />
               </div>
             </div>
-          </div>
+          </RevealOnView>
         </section>
       ) : null}
 
       <section className="px-4 py-12">
         <div className="mx-auto w-full max-w-5xl">
-          <div className="flex flex-wrap items-baseline justify-between border-b border-black/10 pb-4">
-            <h3 className="text-3xl font-light">Latest stories</h3>
-            <span className="text-lg text-black/60">{FALLBACK_NEWS.length} posts</span>
-          </div>
-          <div className="mt-6 grid gap-6 border-l border-b border-black/10 md:grid-cols-3">
+          <RevealOnView>
+            <div className="flex flex-wrap items-baseline justify-between border-b border-black/10 pb-4">
+              <h3 className="text-3xl font-light">Latest stories</h3>
+              <span className="text-lg text-black/60">{FALLBACK_NEWS.length} posts</span>
+            </div>
+          </RevealOnView>
+          <RevealOnView className="mt-6 grid gap-6 border-l border-b border-black/10 md:grid-cols-3" staggerChildren delay={0.2}>
             {latestStories.map((story) => (
               <article key={story.id} className="flex flex-col border-r border-t border-black/10 p-4">
                 <p className="text-xs uppercase tracking-[0.3em] text-black/50">{story.date}</p>

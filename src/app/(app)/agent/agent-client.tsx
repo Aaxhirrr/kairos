@@ -304,6 +304,7 @@ Be concise, actionable, and format JSON code blocks when appropriate.`,
 
       <section className="rounded-3xl border border-white/10 bg-neutral-900/70 p-4">
         <div className="h-[440px] overflow-y-auto pr-2">
+          <RevealOnView staggerChildren>
           {messages.map((message) => (
             <div
               key={message.id}
@@ -322,6 +323,7 @@ Be concise, actionable, and format JSON code blocks when appropriate.`,
               </div>
             </div>
           ))}
+          </RevealOnView>
           <div ref={bottomRef} />
         </div>
         <form

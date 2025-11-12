@@ -13,6 +13,7 @@ import {
 } from "@/app/(app)/lists/actions"
 import type { NevuaSearchEvent, NevuaSubscription, NevuaWatchlist } from "@/lib/nevua"
 import MarketSparkline from "@/components/market-sparkline"
+import RevealOnView from "@/components/reveal-on-view"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -647,7 +648,7 @@ export default function ListsClient({ initialWatchlists, initialSubscriptions }:
             </div>
           </div>
           {bulkMessage ? <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-300">{bulkMessage}</p> : null}
-          <div className="mt-4 space-y-3">
+          <RevealOnView className="mt-4 space-y-3" staggerChildren>
             {watchlists.map((watchlist) => (
               <div
                 key={watchlist.id}
@@ -691,7 +692,7 @@ export default function ListsClient({ initialWatchlists, initialSubscriptions }:
               </div>
             ))}
             {!watchlists.length ? <p className="text-sm text-neutral-500">No watchlists yet.</p> : null}
-          </div>
+          </RevealOnView>
         </SheetContent>
       </Sheet>
       <Dialog open={liveFeedOpen} onOpenChange={setLiveFeedOpen}>
