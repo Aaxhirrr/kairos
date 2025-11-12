@@ -101,7 +101,6 @@ const FALLBACK_NEWS = [
 
 export default function NewsPage() {
   const formValues: NewsFilterFormState = { ...DEFAULT_FORM_VALUES }
-
   const heroStory = FALLBACK_NEWS[0]
   const latestStories = FALLBACK_NEWS.slice(1)
 
@@ -183,20 +182,20 @@ export default function NewsPage() {
                 </a>
               </article>
             ))}
-          </div>
+          </RevealOnView>
         </div>
       </section>
 
       <section className="border-t border-black/10 bg-neutral-50 px-4 py-10">
         <div className="mx-auto w-full max-w-5xl">
-          <details className="group">
+          <details className="group" open>
             <summary className="flex cursor-pointer items-center justify-between text-sm uppercase tracking-[0.3em] text-black">
               AI-Powered Filters
               <span className="text-xs text-black/50">Claude integration (API deactivated)</span>
             </summary>
             <div className="mt-6 rounded-3xl border border-black/10 bg-white p-6">
               <div className="rounded-2xl border border-amber-500/30 bg-amber-50 p-4 text-sm text-amber-900">
-                <p className="font-semibold">🤖 Claude Filter Integration</p>
+                <p className="font-semibold">Claude Filter Integration</p>
                 <p className="mt-2">
                   The Claude-powered filtering system would allow you to ask natural language queries like "Show me markets related to AI regulation" or "Filter by high-conviction trades." Since the Adjacent API is deactivated, this feature is demonstrated conceptually.
                 </p>

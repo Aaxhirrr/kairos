@@ -1,7 +1,7 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import { Search } from "lucide-react"
+import { useMemo, useState, useEffect } from "react"
+import { Search, Loader2 } from "lucide-react"
 
 import PageHeader from "@/components/page-header"
 import RevealOnView from "@/components/reveal-on-view"
@@ -10,20 +10,123 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { demoUser, featuredPeers, type FeaturedPeer } from "@/data/demo-user"
 
-const helperCards = ["Positions snapshot", "Hedge me with $250", "Peer compare"]
+type PolymarketUser = {
+  username: string
+  address: string
+  profileUrl: string
+  avatarUrl?: string
+  volume?: number
+  marketsTraded?: number
+}
 
 export default function UsersPage() {
   const [query, setQuery] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const [fetchedUser, setFetchedUser] = useState<PolymarketUser | null>(null)
   const normalizedQuery = query.trim().toLowerCase()
 
   const highlightedPeer = useMemo<FeaturedPeer | null>(() => {
-    if (!normalizedQuery) return null
+    if (!normalizedQuery || fetchedUser) return null
     return (
       featuredPeers.find((peer) =>
         peer.searchTerms.some((term) => term.toLowerCase().includes(normalizedQuery))
       ) ?? null
     )
-  }, [normalizedQuery])
+  }, [normalizedQuery, fetchedUser])
+
+  const handleFetchUser = async (searchQuery?: string) => {
+    const queryToUse = searchQuery || query
+    if (!queryToUse.trim() || isLoading) return
+
+    setIsLoading(true)
+    setFetchedUser(null)
+
+    try {
+      // Extract username or address from various input formats
+      let searchTerm = queryToUse.trim()
+
+      // Handle Polymarket URLs
+      if (searchTerm.includes('polymarket.com')) {
+        const match = searchTerm.match(/polymarket\.com\/profile\/([^/?]+)/)
+        if (match) searchTerm = match[1]
+      }
+
+      // Handle @mentions
+      if (searchTerm.startsWith('@')) {
+        searchTerm = searchTerm.slice(1)
+      }
+
+      // Try multiple API endpoints
+      let data = null
+
+      // Try gamma API first
+      try {
+        const response = await fetch(`https://gamma-api.polymarket.com/users/${searchTerm}`, {
+          headers: {
+            'Accept': 'application/json',
+          },
+        })
+        if (response.ok) {
+          data = await response.json()
+        }
+      } catch (err) {
+        console.log('Gamma API failed, trying alternatives')
+      }
+
+      // If gamma fails, try the main API
+      if (!data) {
+        try {
+          const response = await fetch(`https://api.polymarket.com/users/${searchTerm}`)
+          if (response.ok) {
+            data = await response.json()
+          }
+        } catch (err) {
+          console.log('Main API failed')
+        }
+      }
+
+      if (data) {
+        setFetchedUser({
+          username: data.username || data.name || searchTerm,
+          address: data.address || data.wallet_address || searchTerm,
+          profileUrl: `https://polymarket.com/profile/${data.username || data.name || searchTerm}`,
+          avatarUrl: data.avatar_url || data.avatarUrl || data.profile_image,
+          volume: data.total_volume || data.volume || data.volumeNum,
+          marketsTraded: data.markets_traded || data.marketsTraded || data.total_markets,
+        })
+      } else {
+        // Fallback: create basic profile
+        setFetchedUser({
+          username: searchTerm,
+          address: searchTerm,
+          profileUrl: `https://polymarket.com/profile/${searchTerm}`,
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching user:', error)
+      // Even on error, show basic profile
+      setFetchedUser({
+        username: queryToUse.trim(),
+        address: queryToUse.trim(),
+        profileUrl: `https://polymarket.com/profile/${queryToUse.trim()}`,
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Auto-fetch when user types
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (query.trim()) {
+        handleFetchUser()
+      } else {
+        setFetchedUser(null)
+      }
+    }, 500)
+
+    return () => clearTimeout(timeoutId)
+  }, [query])
 
   const leaderboard = useMemo(() => {
     if (!highlightedPeer) return featuredPeers
@@ -71,26 +174,45 @@ export default function UsersPage() {
       </RevealOnView>
 
       <RevealOnView className="rounded-3xl border border-white/10 bg-neutral-900/60 p-6 space-y-4">
-        <form
-          className="flex flex-col gap-4 lg:flex-row lg:items-center"
-          onSubmit={(event) => {
-            event.preventDefault()
-          }}
-        >
-          <div className="flex flex-1 items-center gap-3 rounded-2xl border border-white/10 bg-black/30 px-4 py-3">
-            <Search className="h-5 w-5 text-white/40" />
-            <Input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Paste a profile URL, wallet, or @handle"
-              className="border-0 bg-transparent text-white placeholder:text-white/40 focus-visible:ring-0"
-            />
+        <div className="flex flex-1 items-center gap-3 rounded-2xl border border-white/10 bg-black/30 px-4 py-3">
+          <Search className="h-5 w-5 text-white/40" />
+          <Input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Try @fengubiying as a sample profile"
+            className="border-0 bg-transparent text-white placeholder:text-white/40 focus-visible:ring-0"
+          />
+          {isLoading && <Loader2 className="h-5 w-5 animate-spin text-white/40" />}
+        </div>
+        {fetchedUser ? (
+          <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.35em] text-white/40">Polymarket user</p>
+                <h3 className="text-2xl font-semibold text-white">{fetchedUser.username}</h3>
+                <p className="text-sm text-white/60">{fetchedUser.address}</p>
+                {fetchedUser.volume && (
+                  <p className="text-xs text-emerald-300">Volume: ${fetchedUser.volume.toLocaleString()}</p>
+                )}
+                {fetchedUser.marketsTraded && (
+                  <p className="text-xs text-white/60">Markets traded: {fetchedUser.marketsTraded}</p>
+                )}
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button asChild className="rounded-full">
+                  <a href={fetchedUser.profileUrl} target="_blank" rel="noreferrer">
+                    View Polymarket
+                  </a>
+                </Button>
+                <Button asChild variant="outline" className="rounded-full border-white/30 text-white">
+                  <a href={`/agent?prompt=Copy portfolio for ${fetchedUser.username}`}>
+                    Copy with Claude
+                  </a>
+                </Button>
+              </div>
+            </div>
           </div>
-          <Button size="lg" className="rounded-full">
-            Fetch stats
-          </Button>
-        </form>
-        {highlightedPeer ? (
+        ) : highlightedPeer ? (
           <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
@@ -127,7 +249,7 @@ export default function UsersPage() {
           </div>
         ) : (
           <p className="text-sm text-white/60">
-            Paste @Theo4, the wallet 0x5668…5839, or a PredictFolio link to pull their open positions automatically.
+            Search for any Polymarket user by username, wallet address, or profile URL. Try @fengubiying to see it in action.
           </p>
         )}
       </RevealOnView>
@@ -183,17 +305,6 @@ export default function UsersPage() {
                 </a>
               </Button>
             </div>
-          </div>
-        ))}
-      </RevealOnView>
-
-      <RevealOnView className="grid grid-cols-1 gap-4 md:grid-cols-3" staggerChildren>
-        {helperCards.map((item) => (
-          <div key={item} className="rounded-3xl border border-white/10 bg-neutral-900/60 p-5">
-            <p className="text-lg font-semibold text-white">{item}</p>
-            <p className="text-sm text-white/70">
-              Conditioning the coherence solver on a user&apos;s exposure produces a hedge-aware trade vector.
-            </p>
           </div>
         ))}
       </RevealOnView>

@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import LoginForm from "./login-form"
 
 export const metadata = {
@@ -15,7 +16,9 @@ export default function LoginPage() {
             Connect your Polymarket credentials so Claude can pull your trades, coach coherence, and personalize signals.
           </p>
         </div>
-        <LoginForm />
+        <Suspense fallback={<div className="text-center text-white/60">Loading...</div>}>
+          <LoginForm />
+        </Suspense>
       </div>
     </main>
   )
