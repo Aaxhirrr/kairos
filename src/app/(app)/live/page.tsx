@@ -5,24 +5,32 @@ import RevealOnView from "@/components/reveal-on-view"
 import MarketPriceChart from "@/components/market-price-chart"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { fetchTopicMarkets } from "@/lib/polymarket"
 import { fallbackTopicMarkets } from "@/data/polymarket-fallback"
 import { fallbackPriceHistory } from "@/data/polymarket-history-fallback"
 
 const highlights = [
   { title: "Facts rail sync", copy: "Right rail refreshes every 15s with the same snapshot as the live board." },
-  { title: "Bitcoin tracker", copy: "Demo stream pins the Bitcoin volatility stack so you can reference watchlists mid-call." },
-  { title: "Offline cache", copy: "Stream reads deterministic demo JSON, ready to swap with the real feed." },
+  { title: "Live trending markets", copy: "Stream fetches the latest trending markets from Polymarket in real-time." },
+  { title: "Offline fallback", copy: "Gracefully falls back to cached data when API quota is exhausted." },
 ]
 
-const demoTrades = [
-  { title: "Bitcoin volatility stack", price: "Demo 48c", ours: "61c" },
-  { title: "AI interference sweep", price: "Demo 43c", ours: "59c" },
-  { title: "Swing-state turnout", price: "Demo 57c", ours: "64c" },
-]
+export default async function LivePage() {
+  let topicMarkets = fallbackTopicMarkets
+  let dataSource: "live" | "fallback" = "fallback"
 
-export default function LivePage() {
-  const topicMarkets = fallbackTopicMarkets
+  try {
+    const liveMarkets = await fetchTopicMarkets(12)
+    if (liveMarkets && liveMarkets.length > 0) {
+      topicMarkets = liveMarkets
+      dataSource = "live"
+    }
+  } catch (error) {
+    console.error("[live] Failed to fetch markets, using fallback:", error)
+  }
+
   const featured = topicMarkets[0]
+  const recentTrades = topicMarkets.slice(1, 4)
   const initialHistory = fallbackPriceHistory
 
   return (
@@ -30,7 +38,7 @@ export default function LivePage() {
       <PageHeader
         eyebrow="Module 07"
         title="Live - streaming dashboard"
-        description="Probability sparkline, depth snapshots, posterior overlay, and a scripted gap badge when the math disagrees with the book."
+        description="Real-time probability tracking, depth snapshots, and market analysis powered by Polymarket's trending markets."
         actions={
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button size="lg" className="rounded-full">
@@ -50,8 +58,8 @@ export default function LivePage() {
               <p className="text-xs uppercase tracking-[0.35em] text-white/40">sparkline</p>
               <h2 className="text-2xl font-semibold text-white">{featured?.title ?? "Preset market"}</h2>
             </div>
-            <Badge variant="outline" className="border-rose-400/40 text-rose-200">
-              demo seed
+            <Badge variant="outline" className={dataSource === "live" ? "border-emerald-400/40 text-emerald-200" : "border-rose-400/40 text-rose-200"}>
+              {dataSource === "live" ? "live" : "fallback"}
             </Badge>
           </div>
           <div className="mt-6">
@@ -67,27 +75,26 @@ export default function LivePage() {
           <div className="flex items-center gap-3 text-white">
             <Activity className="h-10 w-10 text-emerald-300" />
             <div>
-              <p className="text-xs uppercase tracking-[0.35em] text-white/40">last trades</p>
-              <p className="text-lg font-semibold">Demo feed</p>
+              <p className="text-xs uppercase tracking-[0.35em] text-white/40">trending markets</p>
+              <p className="text-lg font-semibold">{dataSource === "live" ? "Live feed" : "Demo feed"}</p>
             </div>
           </div>
           <ul className="space-y-3 text-sm text-white/80">
-            {demoTrades.map((trade) => (
+            {recentTrades.map((trade) => (
               <li
-                key={trade.title}
+                key={trade.id}
                 className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/25 px-4 py-3"
               >
-                <span className="text-white">{trade.title}</span>
-                <span>{trade.price}</span>
-                <span className="text-emerald-300">{trade.ours}</span>
+                <span className="text-white line-clamp-1">{trade.title}</span>
+                <span className="text-emerald-300">{Math.round(trade.probability * 100)}¢</span>
               </li>
             ))}
           </ul>
           <div className="rounded-2xl border border-white/10 bg-black/25 p-4 text-sm text-white/70">
             <p className="text-xs uppercase tracking-[0.35em] text-white/40">book depth</p>
             <p className="mt-2">
-              Bid: {featured ? `${(featured.probability * 100).toFixed(1)}c` : "--"} - Ask:{" "}
-              {featured ? `${(100 - featured.probability * 100).toFixed(1)}c` : "--"} - Spread 3c
+              Bid: {featured ? `${(featured.probability * 100).toFixed(1)}¢` : "--"} - Ask:{" "}
+              {featured ? `${(100 - featured.probability * 100).toFixed(1)}¢` : "--"} - Spread ~2¢
             </p>
           </div>
         </RevealOnView>
