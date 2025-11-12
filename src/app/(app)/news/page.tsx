@@ -1,9 +1,7 @@
+"use client"
+
 import { NewsFilters, type NewsFilterFormState } from "./news-filters"
 import RevealOnView from "@/components/reveal-on-view"
-
-export const revalidate = 0
-
-type SearchParamsInput = Promise<Record<string, string | string[] | undefined>>
 
 const DEFAULT_FORM_VALUES: NewsFilterFormState = {
   q: "",
@@ -101,8 +99,7 @@ const FALLBACK_NEWS = [
   },
 ]
 
-export default async function NewsPage({ searchParams }: { searchParams?: SearchParamsInput }) {
-  const params = ((await searchParams) ?? {}) as Record<string, string | string[] | undefined>
+export default function NewsPage() {
   const formValues: NewsFilterFormState = { ...DEFAULT_FORM_VALUES }
 
   const heroStory = FALLBACK_NEWS[0]
